@@ -8,7 +8,7 @@ public class User : MonoBehaviour
     private void OnMouseDown()
     {
         Debug.Log("OnClick");
-        Jump();
+        UnityEngine.SceneManagement.SceneManager.LoadScene("BirdGame");
     }
 
     public void Jump()
