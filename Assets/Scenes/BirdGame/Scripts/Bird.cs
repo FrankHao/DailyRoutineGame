@@ -56,5 +56,10 @@ public class Bird : MonoBehaviour {
         {
             gameObject.SetActive(false);
         }
+
+        if (collision2D.gameObject.name.Contains("Saw"))
+        {
+            GetComponent<Animator>().Play("BirdCrash");
+        }
     }
 }
