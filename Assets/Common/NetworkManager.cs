@@ -43,6 +43,8 @@
             else
             {
                 Debug.Log(request.downloadHandler.text);
+                var data = JSON.Parse(request.downloadHandler.text);
+                
                 if (request.responseCode == 200)
                 {
                     Debug.Log("request finished successfully!");
