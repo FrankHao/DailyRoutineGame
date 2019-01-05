@@ -5,10 +5,16 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
   - enabled: 1
-    path: Assets/Scenes/SampleScene.unity
-    guid: 2cda990e2423bbf4892e6590ba056729
+    path: Assets/Scenes/Login/Login.unity
+    guid: 4a1d777fd301348dab6e31be934be8d7
   - enabled: 1
-    path: Assets/Scenes/Users.unity
+    path: Assets/Scenes/Users/Users.unity
     guid: 4c9cca40b59c5424a9050b22c04f8d73
+  - enabled: 1
+    path: Assets/Scenes/BirdGame/BirdGame.unity
+    guid: 602d21cba6d38b64b8c991b1551f2538
   m_configObjects: {}
