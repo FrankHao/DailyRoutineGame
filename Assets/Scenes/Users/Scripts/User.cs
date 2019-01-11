@@ -1,10 +1,6 @@
-﻿
-namespace KidsTodo.User
+﻿namespace KidsTodo.User
 {
-    using System.Collections;
-    using System.Collections.Generic;
     using UnityEngine;
-    using Network;
 
     public class User : MonoBehaviour
     {
