@@ -6,7 +6,7 @@ namespace KidsTodo.User
 
     using SimpleJSON;
 
-    using KidsTodo.Network;
+    using KidsTodo.Common;
 
     public class UserManager
     {
