@@ -1,13 +1,14 @@
-﻿namespace KidsTodo.Common.Network
+﻿
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using SimpleJSON;
+
+using UnityEngine;
+using UnityEngine.Networking;
+
+namespace KidsTodo.Common.Network
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using SimpleJSON;
-
-    using UnityEngine;
-    using UnityEngine.Networking;
-
     public enum ResponseType
     {
         /// <summary>
@@ -53,12 +54,14 @@
             {
                 if (_instance == null)
                 {
-                    lock (typeof(NetworkManager))
+                    _instance = FindObjectOfType<NetworkManager>();
+                    if (_instance == null)
                     {
-                        if (_instance == null)
-                        {
-                            _instance = new NetworkManager();
-                        }
+                        var singletonObject = new GameObject();
+                        _instance = singletonObject.AddComponent<NetworkManager>();
+                        singletonObject.name = typeof(NetworkManager).ToString() + " (Singleton)";
+
+                        DontDestroyOnLoad(singletonObject);
                     }
                 }
                 return _instance;
@@ -67,7 +70,7 @@
 
         public delegate void RequestResponseDelegate(NetworkResponse response);
 
-        public IEnumerator GetRequest(string uri, RequestResponseDelegate onResponse = null)
+        public IEnumerator GetRequest(string uri, Action<ResultMessage> onResponse)
         {
             UnityWebRequest request = UnityWebRequest.Get(uri);
             yield return request.SendWebRequest();
@@ -94,11 +97,12 @@
 
             if (onResponse != null)
             {
-                onResponse.Invoke(response);
+                var resultMsg = GetResultMessage(response);
+                onResponse(resultMsg);
             }
         }
 
-        public IEnumerator PostRequest(string url, WWWForm form, RequestResponseDelegate onResponse = null)
+        public IEnumerator PostRequest(string url, WWWForm form, Action<ResultMessage> onResponse)
         {
             UnityWebRequest request = UnityWebRequest.Post(url, form);
             yield return request.SendWebRequest();
@@ -118,7 +122,8 @@
 
             if (onResponse != null)
             {
-                onResponse.Invoke(response);
+                var resultMessage = GetResultMessage(response);
+                onResponse(resultMessage);
             }
         }
 
@@ -170,7 +175,7 @@
             }
         }
 
-        public IEnumerator PutRequest(string url, string sendData, RequestResponseDelegate onResponse = null)
+        public IEnumerator PutRequest(string url, string sendData, Action<ResultMessage> onResponse = null)
         {
             byte[] dataToPut = System.Text.Encoding.UTF8.GetBytes(sendData);
             UnityWebRequest request = UnityWebRequest.Put(url, dataToPut);
@@ -190,11 +195,12 @@
 
             if (onResponse != null)
             {
-                onResponse.Invoke(response);
+                var resultMessage = GetResultMessage(response);
+                onResponse(resultMessage);
             }
         }
 
-        public IEnumerator DeleteRequest(string url, RequestResponseDelegate onResponse = null)
+        public IEnumerator DeleteRequest(string url, Action<ResultMessage> onResponse = null)
         {
             UnityWebRequest request = UnityWebRequest.Delete(url);
             yield return request.SendWebRequest();
@@ -213,13 +219,69 @@
 
             if (onResponse != null)
             {
-                onResponse.Invoke(response);
+                var resultMsg = GetResultMessage(response);
+                onResponse(resultMsg);
             }
         }
 
+
+        protected ResultMessage GetResultMessage(NetworkResponse response)
+        {
+            var data = JSON.Parse(response.ResponseData);
+            ResultMessage msg = new LoginResultMessage();
+            if (response.Type != ResponseType.Success)
+            {
+                msg.Success = false;
+                msg.ErrorMsg = response.ResponseData;
+            }
+            else
+            {
+                JSONNode errorNode = data["non_field_errors"];
+                if (errorNode != null)
+                {
+                    msg.Success = false;
+                    msg.ErrorMsg = errorNode[0].Value;
+                }
+                else
+                {
+                    msg.Success = true;
+                    msg.Result = "Logged In";
+                }
+            }
+            return msg;
+        }
+
+
         public void TestConnect()
         {
-            StartCoroutine(NetworkManager.Instance.GetRequest("http://httpbin.org/get"));
+            StartCoroutine(NetworkManager.Instance.GetRequest("http://httpbin.org/get", null));
+        }
+
+        /// <summary>
+        /// Called from other module, can we send multi post request at the same time?
+        /// </summary>
+        /// <param name="rtype">Rtype.</param>
+        /// <param name="uri">URI.</param>
+        /// <param name="form">Form.</param>
+        /// <param name="callback">Callback.</param>
+        public void SendPostRequest(string uri, WWWForm form, Action<ResultMessage> callback)
+        {
+            StartCoroutine(PostRequest(uri, form, callback));
+        }
+
+        public void SendGetRequest(string uri, Action<ResultMessage> callback)
+        {
+            StartCoroutine(GetRequest(uri, callback));
+        }
+
+        public void SendDeleteRequest(string uri, Action<ResultMessage> callback)
+        {
+            StartCoroutine(DeleteRequest(uri, callback));
+        }
+
+        public void SendPutRequest(string uri, string requestData, Action<ResultMessage> callback)
+        {
+            StartCoroutine(PutRequest(uri, requestData, callback));
         }
     }
 }

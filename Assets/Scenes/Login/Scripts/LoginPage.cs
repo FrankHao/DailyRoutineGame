@@ -5,6 +5,7 @@ namespace KidsTodo.Login
     using System.Collections.Generic;
 
     using UnityEngine;
+    using UnityEngine.SceneManagement;
     using TMPro;
 
     using KidsTodo.Common.Signals;
@@ -37,22 +38,6 @@ namespace KidsTodo.Login
             string password = GetInputPassword();
 
             Signals.Get<LoginSignal>().Dispatch(username, password);
-        }
-
-        private void OnLoggedIn(ResultMessage msg)
-        {
-            if (msg.MessageId == ResultMessage.LOGIN_RESULT_MESSAGE)
-            {
-                if (msg.Success)
-                {
-                    var status = "Logged in!";
-                    UnityEngine.SceneManagement.SceneManager.LoadScene("Users");
-                }
-                else
-                {
-                    var status = "Login error: " + msg.ErrorMsg;
-                }
-            }
         }
     }
 }

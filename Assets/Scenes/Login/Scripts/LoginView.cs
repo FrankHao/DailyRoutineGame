@@ -1,7 +1,7 @@
 ﻿namespace KidsTodo.Login
 {
     using UnityEngine;
-    public class LoginViewManager : MonoBehaviour
+    public class LoginView : MonoBehaviour
     {
         public GameObject loginPage;
         public GameObject registerPage;

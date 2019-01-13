@@ -1,5 +1,9 @@
-﻿using SimpleJSON;
+﻿
+using System;
+
 using UnityEngine;
+
+using SimpleJSON;
 
 namespace KidsTodo.Common.Network
 {
@@ -62,49 +66,15 @@ namespace KidsTodo.Common.Network
         public const bool UseProduction = false;
         public const bool Secure =false;
         public const string ProductionUrl = "http://foobar:8000/api/";
-        public const string DevelopmentUrl = "http://127.0.0.1:8000/";
+        public const string DevelopmentUrl = "http://127.0.0.1:8080/";
 
-        public delegate void OnCommunicationResponse(ResultMessage msg);
-
-        public OnCommunicationResponse CommunicationResponse;
-
-        public void Login(string username, string password)
+        public void Login(string username, string password, Action<ResultMessage> callback)
         {
             WWWForm form = new WWWForm();
             form.AddField("username", username);
             form.AddField("password", password);
             string uri = BackendUrl + "api/v1/rest-auth/login/";
-            StartCoroutine(NetworkManager.Instance.PostRequest(uri, form, OnLoginResponse));
-        }
-
-        public void OnLoginResponse(NetworkResponse response)
-        {
-            var data = JSON.Parse(response.ResponseData);
-            ResultMessage msg = new LoginResultMessage();
-            if (response.Type != ResponseType.Success)
-            {
-                msg.Success = false;
-                msg.ErrorMsg = response.ResponseData;
-            }
-            else
-            {
-                JSONNode errorNode = data["non_field_errors"];
-                if (errorNode != null)
-                {
-                    msg.Success = false;
-                    msg.ErrorMsg = errorNode[0].Value;
-                }
-                else
-                {
-                    msg.Success = true;
-                    msg.Result = "Logged In";
-                }
-            }
-
-            if (CommunicationResponse != null)
-            {
-                CommunicationResponse(msg);
-            }
+            NetworkManager.Instance.SendPostRequest(uri, form, callback);
         }
     }
 }
