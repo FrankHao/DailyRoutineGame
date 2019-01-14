@@ -9,7 +9,7 @@ namespace KidsTodo.Task
 
     public class TaskManager : MonoBehaviour
     {
-        List<GameObject> taskNodeList = new List<GameObject>();
+        //List<GameObject> taskNodeList = new List<GameObject>();
 
         /// <summary>
         /// Inits the tasks from user data.
