@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using SimpleJSON;
 
 using UnityEngine;
@@ -97,7 +98,7 @@ namespace KidsTodo.Common.Network
 
             if (onResponse != null)
             {
-                var resultMsg = GetResultMessage(response);
+                var resultMsg = Communicator.Instance.GetResultMessage(response);
                 onResponse(resultMsg);
             }
         }
@@ -122,14 +123,15 @@ namespace KidsTodo.Common.Network
 
             if (onResponse != null)
             {
-                var resultMessage = GetResultMessage(response);
+                var resultMessage = Communicator.Instance.GetResultMessage(response);
                 onResponse(resultMessage);
             }
         }
 
-        public IEnumerator PostRequest(string uri, string bodyJsonString, RequestResponseDelegate onResponse = null)
+        public IEnumerator PostRequest(string uri, string bodyJsonString, Action<ResultMessage> onResponse)
         {
-            UnityWebRequest request = UnityWebRequest.Post(uri, bodyJsonString);
+            UnityWebRequest request = UnityWebRequest.Put(uri, bodyJsonString);
+            request.method = "POST";
             request.SetRequestHeader("Content-Type", "application/json");
             yield return request.SendWebRequest();
 
@@ -148,11 +150,12 @@ namespace KidsTodo.Common.Network
 
             if (onResponse != null)
             {
-                onResponse.Invoke(response);
+                var resultMessage = Communicator.Instance.GetResultMessage(response);
+                onResponse(resultMessage);
             }
         }
 
-        public IEnumerator PostRequest(string url, List<IMultipartFormSection> formData, RequestResponseDelegate onResponse = null)
+        public IEnumerator PostRequest(string url, List<IMultipartFormSection> formData, Action<ResultMessage> onResponse = null)
         {
             UnityWebRequest request = UnityWebRequest.Post(url, formData);
             yield return request.SendWebRequest();
@@ -171,7 +174,8 @@ namespace KidsTodo.Common.Network
 
             if (onResponse != null)
             {
-                onResponse.Invoke(response);
+                var resultMessage = Communicator.Instance.GetResultMessage(response);
+                onResponse(resultMessage);
             }
         }
 
@@ -195,7 +199,7 @@ namespace KidsTodo.Common.Network
 
             if (onResponse != null)
             {
-                var resultMessage = GetResultMessage(response);
+                var resultMessage = Communicator.Instance.GetResultMessage(response);
                 onResponse(resultMessage);
             }
         }
@@ -219,38 +223,10 @@ namespace KidsTodo.Common.Network
 
             if (onResponse != null)
             {
-                var resultMsg = GetResultMessage(response);
+                var resultMsg = Communicator.Instance.GetResultMessage(response);
                 onResponse(resultMsg);
             }
         }
-
-
-        protected ResultMessage GetResultMessage(NetworkResponse response)
-        {
-            var data = JSON.Parse(response.ResponseData);
-            ResultMessage msg = new LoginResultMessage();
-            if (response.Type != ResponseType.Success)
-            {
-                msg.Success = false;
-                msg.ErrorMsg = response.ResponseData;
-            }
-            else
-            {
-                JSONNode errorNode = data["non_field_errors"];
-                if (errorNode != null)
-                {
-                    msg.Success = false;
-                    msg.ErrorMsg = errorNode[0].Value;
-                }
-                else
-                {
-                    msg.Success = true;
-                    msg.Result = "Logged In";
-                }
-            }
-            return msg;
-        }
-
 
         public void TestConnect()
         {
@@ -267,6 +243,11 @@ namespace KidsTodo.Common.Network
         public void SendPostRequest(string uri, WWWForm form, Action<ResultMessage> callback)
         {
             StartCoroutine(PostRequest(uri, form, callback));
+        }
+
+        public void SendPostRequest(string uri, string bodyJsonString, Action<ResultMessage> callback)
+        {
+            StartCoroutine(PostRequest(uri, bodyJsonString, callback));
         }
 
         public void SendGetRequest(string uri, Action<ResultMessage> callback)
