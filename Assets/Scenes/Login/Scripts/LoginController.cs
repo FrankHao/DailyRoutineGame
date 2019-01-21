@@ -76,6 +76,7 @@ namespace KidsTodo.Login
             Debug.Log(string.Format("OnLoginSignal, ready to send data to server, {0}, {1}",
                 username, password));
             Communicator.Instance.Login(username, password, OnLoggedIn);
+            //Communicator.Instance.Logout(username, OnLoggedIn);
         }
 
         /// <summary>

@@ -1,6 +1,7 @@
 ﻿using System;
 using UnityEngine;
 using SimpleJSON;
+using UnityEngine.Networking;
 
 namespace KidsTodo.Common.Network
 {
@@ -40,14 +41,34 @@ namespace KidsTodo.Common.Network
         public const bool UseProduction = false;
         public const bool Secure =false;
         public const string ProductionUrl = "http://foobar:8000/api/";
-        public const string DevelopmentUrl = "http://127.0.0.1:8000/";
+        public const string DevelopmentUrl = "http://localhost:8000/";
 
         public void Login(string username, string password, Action<ResultMessage> callback)
         {
+            /*WWWForm form = new WWWForm();
+            form.AddField("username", "maojin");// username);
+            form.AddField("password", "780117aB");// password);
+            string uri = BackendUrl + "api/v1/rest-auth/login/";
+            NetworkManager.Instance.SendRequestWithWWW(uri, "POST", form, callback);*/
+
+            JSONObject node = new JSONObject();
+            node.Add("username", "maojin");// username);
+            node.Add("password", "780117aB");// password);
+            string uri = BackendUrl + "api/v1/rest-auth/login/";
+            NetworkManager.Instance.SendPostRequest(uri, node.ToString(), callback);
+
+            /*WWWForm form = new WWWForm();
+            form.AddField("username", "maojin");// username);
+            form.AddField("password", "780117aB");// password);
+            string uri = BackendUrl + "api/v1/rest-auth/login/";
+            NetworkManager.Instance.SendPostRequest(uri, form, callback);*/
+        }
+
+        public void Logout(string username, Action<ResultMessage> callback)
+        {
             JSONObject node = new JSONObject();
             node.Add("username", username);
-            node.Add("password", password);
-            string uri = BackendUrl + "api/v1/rest-auth/login/";
+            string uri = BackendUrl + "api/v1/rest-auth/logout/";
             NetworkManager.Instance.SendPostRequest(uri, node.ToString(), callback);
         }
 
