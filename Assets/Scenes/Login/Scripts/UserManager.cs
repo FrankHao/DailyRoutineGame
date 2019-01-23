@@ -10,6 +10,18 @@ namespace KidsTodo.User
 
     public class UserManager
     {
+        private static UserManager _instance;
+        public static UserManager Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = new UserManager();
+                }
+                return _instance;
+            }
+        }
         private string name = "Null";
         public string Name
         {
@@ -29,6 +41,13 @@ namespace KidsTodo.User
         {
             get { return age; }
             set { age = value; }
+        }
+
+        private string key = "";
+        public string Key
+        {
+            get { return key; }
+            set { key = value; }
         }
 
         public void UpdateUserData(string userJson)
