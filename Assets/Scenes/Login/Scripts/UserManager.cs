@@ -50,6 +50,20 @@ namespace KidsTodo.User
             set { key = value; }
         }
 
+        private string jwtTokenAccess = "";
+        public string JwtTokenAccess
+        {
+            get { return jwtTokenAccess; }
+            set { jwtTokenAccess = value; }
+        }
+
+        private string jwtTokenRefresh = "";
+        public string JwtTokenRefresh
+        {
+            get { return jwtTokenRefresh; }
+            set { jwtTokenRefresh = value; }
+        }
+
         public void UpdateUserData(string userJson)
         {
             var userData = SimpleJSON.JSON.Parse(userJson);

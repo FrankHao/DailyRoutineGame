@@ -90,19 +90,24 @@ namespace KidsTodo.Login
             {
                 // TODO: use scene manager to manage multi scenes.
                 JSONNode data = JSON.Parse(msg.Result);
-                var keyNode = data["key"];
-                if (keyNode != null)
+                var accessNode = data["access"];
+                var refreshNode = data["refresh"];
+                if (accessNode != null && refreshNode != null)
                 {
                     //logged in successfully
                     loginView.gameObject.SetActive(false);
                     SceneManager.LoadScene("Users", LoadSceneMode.Additive);
-                    UserManager.Instance.Key = keyNode.Value;
+                    UserManager.Instance.JwtTokenAccess = accessNode.Value;
+                    UserManager.Instance.JwtTokenRefresh = refreshNode.Value;
                     return;
                 }
                 else
                 {
-                    //not logged in
-                    //loginView
+                    var errorNode = data["non_field_errors"];
+                    if (errorNode != null)
+                    {
+                        string s = errorNode[0].Value;
+                    }
                 }
             }
             else

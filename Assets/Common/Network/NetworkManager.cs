@@ -115,13 +115,11 @@ namespace KidsTodo.Common.Network
 
         public IEnumerator PostRequest(string uri, string bodyJsonString, Action<ResultMessage> onResponse)
         {
-
             UnityWebRequest request = UnityWebRequest.Put(uri, bodyJsonString);
             request.method = "POST";
             request.SetRequestHeader("Cookie", "");
             request.SetRequestHeader("Content-Type", "application/json");
             request.SetRequestHeader("X-UNITY-METHOD", "POST");
-            UnityWebRequest.ClearCookieCache();
             yield return request.SendWebRequest();
 
             var headers = request.GetResponseHeaders();
@@ -287,10 +285,10 @@ namespace KidsTodo.Common.Network
 
             System.Diagnostics.StackTrace stackTrace = new System.Diagnostics.StackTrace();
             string callee = stackTrace.GetFrame(1).GetMethod().Name;
-            StartCoroutine(HandleRequest(request, onResponse));
+            StartCoroutine(HandleWWWRequest(request, onResponse));
         }
 
-        private IEnumerator HandleRequest(WWW request, Action<ResultMessage> onResponse)
+        private IEnumerator HandleWWWRequest(WWW request, Action<ResultMessage> onResponse)
         {
             //Wait till request is done
             while (true)

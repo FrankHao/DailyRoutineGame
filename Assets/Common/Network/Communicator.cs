@@ -45,23 +45,11 @@ namespace KidsTodo.Common.Network
 
         public void Login(string username, string password, Action<ResultMessage> callback)
         {
-            /*WWWForm form = new WWWForm();
-            form.AddField("username", "maojin");// username);
-            form.AddField("password", "780117aB");// password);
-            string uri = BackendUrl + "api/v1/rest-auth/login/";
-            NetworkManager.Instance.SendRequestWithWWW(uri, "POST", form, callback);*/
-
             JSONObject node = new JSONObject();
-            node.Add("username", "maojin");// username);
-            node.Add("password", "780117aB");// password);
-            string uri = BackendUrl + "api/v1/rest-auth/login/";
+            node.Add("username", username);
+            node.Add("password", password);
+            string uri = BackendUrl + "api/token/";
             NetworkManager.Instance.SendPostRequest(uri, node.ToString(), callback);
-
-            /*WWWForm form = new WWWForm();
-            form.AddField("username", "maojin");// username);
-            form.AddField("password", "780117aB");// password);
-            string uri = BackendUrl + "api/v1/rest-auth/login/";
-            NetworkManager.Instance.SendPostRequest(uri, form, callback);*/
         }
 
         public void Logout(string username, Action<ResultMessage> callback)
