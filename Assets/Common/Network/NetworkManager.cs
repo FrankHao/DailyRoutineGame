@@ -2,6 +2,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
+using System.Text.RegularExpressions;
 using SimpleJSON;
 
 using UnityEngine;
@@ -68,42 +70,26 @@ namespace KidsTodo.Common.Network
             }
         }
 
+        private string Token = "";
+
         public delegate void RequestResponseDelegate(NetworkResponse response);
 
-        public IEnumerator GetRequest(string uri, Action<ResultMessage> onResponse)
+        public IEnumerator GetRequest(string uri, Action<UnityWebRequest> onResponse)
         {
             UnityWebRequest request = UnityWebRequest.Get(uri);
             yield return request.SendWebRequest();
-            NetworkResponse response = new NetworkResponse();
-            if (request.isNetworkError)
-            {
-                Debug.LogError("request error");
-                response.Type = ResponseType.NetworkError;
-            }
-            else
-            {
-                Debug.Log(request.downloadHandler.text);
-                response.Type = ResponseType.Success;
-                response.ResponseData = request.downloadHandler.text;
-                if (request.responseCode == 200)
-                {
-                    Debug.Log("request finished successfully!");
-                }
-                else if (request.responseCode == 401)
-                {
-                    Debug.Log("Error 401: Unauthorized.");
-                }
-            }
-
             if (onResponse != null)
             {
-                var resultMsg = GetResultMessage(response);
-                onResponse(resultMsg);
+                onResponse(request);
             }
         }
 
         public IEnumerator PostRequest(string url, WWWForm form, Action<ResultMessage> onResponse)
         {
+            //make sure we get a json response
+            form.headers.Add("Accept", "application/json");
+            //also add the correct request method
+            form.headers.Add("X-UNITY-METHOD", "POST");
             UnityWebRequest request = UnityWebRequest.Post(url, form);
             yield return request.SendWebRequest();
 
@@ -122,17 +108,21 @@ namespace KidsTodo.Common.Network
 
             if (onResponse != null)
             {
-                var resultMessage = GetResultMessage(response);
+                var resultMessage = Communicator.Instance.GetResultMessage(response);
                 onResponse(resultMessage);
             }
         }
 
-        public IEnumerator PostRequest(string uri, string bodyJsonString, RequestResponseDelegate onResponse = null)
+        public IEnumerator PostRequest(string uri, string bodyJsonString, Action<ResultMessage> onResponse)
         {
-            UnityWebRequest request = UnityWebRequest.Post(uri, bodyJsonString);
+            UnityWebRequest request = UnityWebRequest.Put(uri, bodyJsonString);
+            request.method = "POST";
+            request.SetRequestHeader("Cookie", "");
             request.SetRequestHeader("Content-Type", "application/json");
+            request.SetRequestHeader("X-UNITY-METHOD", "POST");
             yield return request.SendWebRequest();
 
+            var headers = request.GetResponseHeaders();
             NetworkResponse response = new NetworkResponse();
             if (request.isNetworkError)
             {
@@ -148,11 +138,12 @@ namespace KidsTodo.Common.Network
 
             if (onResponse != null)
             {
-                onResponse.Invoke(response);
+                var resultMessage = Communicator.Instance.GetResultMessage(response);
+                onResponse(resultMessage);
             }
         }
 
-        public IEnumerator PostRequest(string url, List<IMultipartFormSection> formData, RequestResponseDelegate onResponse = null)
+        public IEnumerator PostRequest(string url, List<IMultipartFormSection> formData, Action<ResultMessage> onResponse = null)
         {
             UnityWebRequest request = UnityWebRequest.Post(url, formData);
             yield return request.SendWebRequest();
@@ -171,7 +162,8 @@ namespace KidsTodo.Common.Network
 
             if (onResponse != null)
             {
-                onResponse.Invoke(response);
+                var resultMessage = Communicator.Instance.GetResultMessage(response);
+                onResponse(resultMessage);
             }
         }
 
@@ -195,7 +187,7 @@ namespace KidsTodo.Common.Network
 
             if (onResponse != null)
             {
-                var resultMessage = GetResultMessage(response);
+                var resultMessage = Communicator.Instance.GetResultMessage(response);
                 onResponse(resultMessage);
             }
         }
@@ -219,38 +211,10 @@ namespace KidsTodo.Common.Network
 
             if (onResponse != null)
             {
-                var resultMsg = GetResultMessage(response);
+                var resultMsg = Communicator.Instance.GetResultMessage(response);
                 onResponse(resultMsg);
             }
         }
-
-
-        protected ResultMessage GetResultMessage(NetworkResponse response)
-        {
-            var data = JSON.Parse(response.ResponseData);
-            ResultMessage msg = new LoginResultMessage();
-            if (response.Type != ResponseType.Success)
-            {
-                msg.Success = false;
-                msg.ErrorMsg = response.ResponseData;
-            }
-            else
-            {
-                JSONNode errorNode = data["non_field_errors"];
-                if (errorNode != null)
-                {
-                    msg.Success = false;
-                    msg.ErrorMsg = errorNode[0].Value;
-                }
-                else
-                {
-                    msg.Success = true;
-                    msg.Result = "Logged In";
-                }
-            }
-            return msg;
-        }
-
 
         public void TestConnect()
         {
@@ -269,7 +233,12 @@ namespace KidsTodo.Common.Network
             StartCoroutine(PostRequest(uri, form, callback));
         }
 
-        public void SendGetRequest(string uri, Action<ResultMessage> callback)
+        public void SendPostRequest(string uri, string bodyJsonString, Action<ResultMessage> callback)
+        {
+            StartCoroutine(PostRequest(uri, bodyJsonString, callback));
+        }
+
+        public void SendGetRequest(string uri, Action<UnityWebRequest> callback)
         {
             StartCoroutine(GetRequest(uri, callback));
         }
@@ -282,6 +251,91 @@ namespace KidsTodo.Common.Network
         public void SendPutRequest(string uri, string requestData, Action<ResultMessage> callback)
         {
             StartCoroutine(PutRequest(uri, requestData, callback));
+        }
+
+        public void SendRequestWithWWW(string url, string type, WWWForm wwwForm,
+            Action<ResultMessage> onResponse = null)
+        {
+            WWW request;
+
+            Dictionary<string, string> headers;
+
+            byte[] postData;
+            if (wwwForm == null)
+            {
+                wwwForm = new WWWForm();
+                postData = new byte[] { 1 };
+            }
+            else
+            {
+                postData = wwwForm.data;
+            }
+
+            headers = wwwForm.headers;
+
+            //make sure we get a json response
+            headers.Add("Accept", "application/json");
+
+            //also add the correct request method
+            headers.Add("X-UNITY-METHOD", type.ToString().ToUpper());
+
+            //also, add the authentication token, if we have one
+
+            request = new WWW(url, postData, headers);
+
+            System.Diagnostics.StackTrace stackTrace = new System.Diagnostics.StackTrace();
+            string callee = stackTrace.GetFrame(1).GetMethod().Name;
+            StartCoroutine(HandleWWWRequest(request, onResponse));
+        }
+
+        private IEnumerator HandleWWWRequest(WWW request, Action<ResultMessage> onResponse)
+        {
+            //Wait till request is done
+            while (true)
+            {
+                if (request.isDone)
+                {
+                    break;
+                }
+                yield return new WaitForEndOfFrame();
+            }
+
+            NetworkResponse response = new NetworkResponse();
+            response.ResponseData = request.text;
+            //catch proper client errors(eg. can't reach the server)
+            if (!String.IsNullOrEmpty(request.error))
+            {
+                if (onResponse != null)
+                {
+                    response.Type = ResponseType.NetworkError;
+                }
+                else
+                {
+                    response.Type = ResponseType.Success;
+                }
+            }
+
+            var cookie = request.responseHeaders["cookie"];
+            if (cookie != null)
+            {
+                var cookieString = cookie.Split(';');
+                foreach (var s in cookieString)
+                {
+                    var item = s.Split('=');
+                    if (item[0].Contains("csrftoken"))
+                    {
+                        Token = item[1];
+                        break;
+                    }
+                }
+            }
+
+            //deal with successful responses
+            if (onResponse != null)
+            {
+                var resultMsg = Communicator.Instance.GetResultMessage(response);
+                onResponse(resultMsg);
+            }
         }
     }
 }

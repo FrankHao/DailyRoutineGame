@@ -9,6 +9,8 @@ namespace KidsTodo.Login
 
     using KidsTodo.Common.Signals;
     using KidsTodo.Common.Network;
+    using SimpleJSON;
+    using KidsTodo.User;
 
     public class LoginController : MonoBehaviour
     {
@@ -74,6 +76,7 @@ namespace KidsTodo.Login
             Debug.Log(string.Format("OnLoginSignal, ready to send data to server, {0}, {1}",
                 username, password));
             Communicator.Instance.Login(username, password, OnLoggedIn);
+            //Communicator.Instance.Logout(username, OnLoggedIn);
         }
 
         /// <summary>
@@ -83,14 +86,34 @@ namespace KidsTodo.Login
         private void OnLoggedIn(ResultMessage msg)
         {
             Debug.Log(string.Format("OnLoggedIn, get result message, {0}", msg.MessageId));
-            if (msg.MessageId == ResultMessage.LOGIN_RESULT_MESSAGE)
+            if (msg.Success)
             {
-                if (msg.Success)
+                // TODO: use scene manager to manage multi scenes.
+                JSONNode data = JSON.Parse(msg.Result);
+                var accessNode = data["access"];
+                var refreshNode = data["refresh"];
+                if (accessNode != null && refreshNode != null)
                 {
-                    // TODO: use scene manager to manage multi scenes.
+                    //logged in successfully
                     loginView.gameObject.SetActive(false);
                     SceneManager.LoadScene("Users", LoadSceneMode.Additive);
+                    UserManager.Instance.JwtTokenAccess = accessNode.Value;
+                    UserManager.Instance.JwtTokenRefresh = refreshNode.Value;
+                    return;
                 }
+                else
+                {
+                    var errorNode = data["non_field_errors"];
+                    if (errorNode != null)
+                    {
+                        string s = errorNode[0].Value;
+                    }
+                }
+            }
+            else
+            {
+                //not logged in
+                //loginView
             }
         }
     }
